@@ -24,6 +24,32 @@ bool prioritycmp(pair<pair<int,float>,pair<int,int> > a , pair<pair<int,float>,p
 	return a.second.second<b.second.second;
 }
 
+bool float_cmp(pair<pair<float,float>,int>a,pair<pair<float,float>,int>b)
+{
+	return a.first.second<b.first.second;
+}
+
+bool pre_priority_arrival_time(pair<pair<float,float>,pair<int,int> >a,pair<pair<float,float>,pair<int,int> >b)
+{
+	return a.first.second<b.first.second;
+}
+
+bool float_sjfcmp(pair<pair<float,float>,int>a,pair<pair<float,float>,int>b)
+{
+	if(a.first.first==b.first.first)
+		return a.first.second<b.first.second;
+	return a.first.first<b.first.first;
+
+}
+
+bool float_prioritycmp(pair<pair<float,float>,pair<int,int> >a,pair<pair<float,float>,pair<int,int> >b)
+{
+	if(a.second.second==b.second.second)
+		return a.first.second<b.first.second;
+	return a.second.second<b.second.second;
+
+}
+
 void fcfs(pair<pair<int,float>,int> p[],int n)
 {
 	int i;
@@ -69,7 +95,6 @@ void fcfs(pair<pair<int,float>,int> p[],int n)
    cout<<"Average TAT: "<<avgtat<<endl;
    cout<<"Average WT: "<<avgwt<<endl;
    cout<<"Average RT: "<<avgwt<<endl;
-
 
 }
 
@@ -445,27 +470,23 @@ void round_robin(pair<pair<int,float>,int>  p[], int n)
 
 void srtf(pair<pair<int,float>,int>  q[],int n)
 {
-	pair<pair<int,float>,int> p[n];
+	pair<pair<float,float>,int> p[n];
 	for(int i=0;i<n;++i)
 	{
-		p[i].first.first=q[i].first.first;
+		p[i].first.first=(float)q[i].first.first;
 		p[i].first.second=q[i].first.second;
 		p[i].second=q[i].second;
 	}
-	stable_sort(p,p+n,cmp);
+	stable_sort(p,p+n,float_cmp);
 	if(n==0)
 	{
 		cout<<"No Process";
 		return ;
 	}
 	float start[n];
-	float sum = 0.0;
 	int i;
-	float execution_time[n];
 	for(i=0;i<n;++i){
-		sum+=(float)p[i].first.first;
 		start[i]=-1.0;
-		execution_time[i]=0.0;
 	}
 	float total_time = 0.0,tat[n],wt[n],rt[n];
 	bool flag=false;
@@ -481,7 +502,7 @@ void srtf(pair<pair<int,float>,int>  q[],int n)
 			if(total_elapsed_time+total_time>=p[j].first.second)
 				++cnt;
 		}
-		stable_sort(p,p+cnt,sjfcmp);
+		stable_sort(p,p+cnt,float_sjfcmp);
 
 		
 		for(i=0;i<n;++i){
@@ -493,18 +514,25 @@ void srtf(pair<pair<int,float>,int>  q[],int n)
 		if(total_elapsed_time+total_time<p[i].first.second)
 		{
 				total_elapsed_time+=p[i].first.second-total_time;
-				if(start[p[i].second]==-1.0)
-					start[p[i].second]=total_time+total_elapsed_time;
 				j=i+1;
 				while(j<n&&p[i].first.second==p[j].first.second)
 					j++;
-				if(j==n){
+				stable_sort(p,p+j,float_cmp);
+				for(i=0;i<n;++i)
+					if(p[i].first.first!=0)
+						break;
+				if(i==n-1)
+				{
 					flag=true;
 					break;
 				}
-				float temp=p[j].first.second-total_time-total_elapsed_time;
+				float temp=p[j].first.second-p[i].first.second;
 				if(temp>=p[i].first.first)
 				{
+					if(start[p[i].second]==-1.0)
+					{
+						start[p[i].second]=total_time+total_elapsed_time;
+					}
 					total_time+=(float)p[i].first.first;
 					p[i].first.first=0;
 					tat[p[i].second]=total_time+total_elapsed_time-p[i].first.second;
@@ -513,6 +541,10 @@ void srtf(pair<pair<int,float>,int>  q[],int n)
 				}
 				else
 				{
+					if(start[p[i].second]==-1.0)
+					{
+						start[p[i].second]=total_time+total_elapsed_time;
+					}
 					p[i].first.first=temp;
 					total_time+=temp;
 
@@ -524,16 +556,19 @@ void srtf(pair<pair<int,float>,int>  q[],int n)
 		}
 		else
 		{
-				j=i+1;
-				while(j<n&&(p[i].first.second==p[j].first.second||p[j].first.first==0))
-					j++;
-				if(j==n){
+				if(i==n-1)
+				{
 					flag=true;
 					break;
 				}
-				float temp=p[j].first.second-total_time-total_elapsed_time;
+				float temp=p[cnt].first.second-p[i].first.second;
 				if(temp>=p[i].first.first)
 				{
+					if(start[p[i].second]==-1.0)
+					{
+						start[p[i].second]=total_elapsed_time+total_time;
+
+					}
 					total_time+=(float)p[i].first.first;
 					p[i].first.first=0;
 					tat[p[i].second]=total_time+total_elapsed_time-p[i].first.second;
@@ -542,7 +577,11 @@ void srtf(pair<pair<int,float>,int>  q[],int n)
 				}
 				else
 				{
-					cout<<p[i].second<<" ";
+					if(start[p[i].second]==-1.0)
+					{
+						start[p[i].second]=total_elapsed_time+total_time;
+
+					}
 					p[i].first.first-=temp;
 					total_time+=temp;
 				}
@@ -553,17 +592,17 @@ void srtf(pair<pair<int,float>,int>  q[],int n)
 		if(flag)
 			break;
 	}
-	stable_sort(p,p+n,sjfcmp);
+	stable_sort(p,p+n,float_sjfcmp);
 	for(i=0;i<n;++i)
 	{
 		if(p[i].first.first!=0)
 		{
 			total_time+=p[i].first.first;
-			p[i].first.first=0;
 			tat[p[i].second]=total_time+total_elapsed_time-p[i].first.second;
 			wt[p[i].second]=tat[p[i].second]-q[i].first.first;
 			if(start[p[i].second]==-1.0)
 				start[p[i].second]=total_time+total_elapsed_time-p[i].first.first;
+			p[i].first.first=0.0;
 			rt[p[i].second]=start[p[i].second]-p[i].first.second;
 		}
 	}
@@ -581,6 +620,159 @@ void srtf(pair<pair<int,float>,int>  q[],int n)
     cout<<"Average RT: "<<avgrt<<endl;
 
 	
+}
+
+void pre_priority(pair<pair<int,float>,pair<int,int> >  q[],int n)
+{
+	pair<pair<float,float>,pair<int,int> > p[n];
+	for(int i=0;i<n;++i)
+	{
+		p[i].first.first=(float)q[i].first.first;
+		p[i].first.second=q[i].first.second;
+		p[i].second.first=q[i].second.first;
+		p[i].second.second=q[i].second.second;
+	}
+	stable_sort(p,p+n,pre_priority_arrival_time);
+	if(n==0)
+	{
+		cout<<"No Process";
+		return ;
+	}
+	float start[n];
+	int i;
+	for(i=0;i<n;++i){
+		start[i]=-1.0;
+	}
+	float total_time = 0.0,tat[n],wt[n],rt[n];
+	bool flag=false;
+	float total_elapsed_time=0.0;
+	i=0;
+	float maxm=p[n-1].first.second;
+	while(total_time+total_elapsed_time<maxm)
+	{
+
+		int j=0,cnt=0;
+		for(j=0;j<n;++j)
+		{
+			if(total_elapsed_time+total_time>=p[j].first.second)
+				++cnt;
+		}
+		stable_sort(p,p+cnt,float_prioritycmp);
+
+		
+		for(i=0;i<n;++i){
+			if(p[i].first.first!=0)
+				{
+					break;
+				}
+		}
+		if(total_elapsed_time+total_time<p[i].first.second)
+		{
+				total_elapsed_time+=p[i].first.second-total_time;
+				j=i+1;
+				while(j<n&&p[i].first.second==p[j].first.second)
+					j++;
+				stable_sort(p,p+j,float_prioritycmp);
+				for(i=0;i<n;++i)
+					if(p[i].first.first!=0)
+						break;
+				if(i==n-1)
+				{
+					flag=true;
+					break;
+				}
+				float temp=p[j].first.second-p[i].first.second;
+				if(temp>=p[i].first.first)
+				{
+					if(start[p[i].second.first]==-1.0)
+					{
+						start[p[i].second.first]=total_time+total_elapsed_time;
+					}
+					total_time+=(float)p[i].first.first;
+					p[i].first.first=0;
+					tat[p[i].second.first]=total_time+total_elapsed_time-p[i].first.second;
+					wt[p[i].second.first]=tat[p[i].second.first]-q[i].first.first;
+					rt[p[i].second.first]=start[p[i].second.first]-p[i].first.second;
+				}
+				else
+				{
+					if(start[p[i].second.first]==-1.0)
+					{
+						start[p[i].second.first]=total_time+total_elapsed_time;
+					}
+					p[i].first.first=temp;
+					total_time+=temp;
+
+				}
+
+			
+	
+
+		}
+		else
+		{
+				if(i==n-1)
+				{
+					flag=true;
+					break;
+				}
+				float temp=p[cnt].first.second-p[i].first.second;
+				if(temp>=p[i].first.first)
+				{
+					if(start[p[i].second.first]==-1.0)
+					{
+						start[p[i].second.first]=total_elapsed_time+total_time;
+
+					}
+					total_time+=(float)p[i].first.first;
+					p[i].first.first=0;
+					tat[p[i].second.first]=total_time+total_elapsed_time-p[i].first.second;
+					wt[p[i].second.first]=tat[p[i].second.first]-q[i].first.first;
+					rt[p[i].second.first]=start[p[i].second.first]-p[i].first.second;
+				}
+				else
+				{
+					if(start[p[i].second.first]==-1.0)
+					{
+						start[p[i].second.first]=total_elapsed_time+total_time;
+
+					}
+					p[i].first.first-=temp;
+					total_time+=temp;
+				}
+
+			
+
+		}
+		if(flag)
+			break;
+	}
+	stable_sort(p,p+n,float_prioritycmp);
+	for(i=0;i<n;++i)
+	{
+		if(p[i].first.first!=0)
+		{
+			total_time+=p[i].first.first;
+			tat[p[i].second.first]=total_time+total_elapsed_time-p[i].first.second;
+			wt[p[i].second.first]=tat[p[i].second.first]-q[i].first.first;
+			if(start[p[i].second.first]==-1.0)
+				start[p[i].second.first]=total_time+total_elapsed_time-p[i].first.first;
+			p[i].first.first=0.0;
+			rt[p[i].second.first]=start[p[i].second.first]-p[i].first.second;
+		}
+	}
+	cout<<"Process  TAT  WT  RT"<<endl;
+	for (i = 0; i < n; ++i)
+	{
+		cout<<i<<"        "<<tat[i]<<"   "<<wt[i]<<"   "<<rt[i]<<endl;
+	}
+	float avgtat=(float)accumulate(tat,tat+n,0.0)/n;
+   	float avgwt=(float)accumulate(wt,wt+n,0.0)/n;
+   	float avgrt=(float)accumulate(rt,rt+n,0.0)/n;
+
+   	cout<<"Average TAT: "<<avgtat<<endl;
+    cout<<"Average WT: "<<avgwt<<endl;
+    cout<<"Average RT: "<<avgrt<<endl;
 }
 
 int main(int argc, char const *argv[])
@@ -611,6 +803,6 @@ int main(int argc, char const *argv[])
 	}
 	
 	srtf(p,n);
-	
+	pre_priority(prior,n);
 	return 0;
 }
